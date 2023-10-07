@@ -44,7 +44,7 @@ const App = function () {
                     </label>
                     <input
                         type="number"
-                        min={0}
+                        min={1}
                         step={1}
                         className="form-control"
                         id="max_pool_size"
