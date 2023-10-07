@@ -13,7 +13,7 @@ export const PromisePool = function <T>(MAX_POOL_SIZE: number) {
     return {
         all: function (promiseFactoryList: (() => Promise<T>)[]) {
             return new Promise((resolve: (t: T[]) => void) => {
-                (async function () {
+                (async () => {
                     pendings.push(...promiseFactoryList);
                     results.push(...promiseFactoryList.map(() => undefined));
 

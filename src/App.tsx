@@ -20,7 +20,12 @@ const App = function () {
         })();
     }, []);
 
-    return <h1>Vite + React</h1>;
+    return (
+        <>
+            <h1>Promise Pool Manager</h1>
+            <p>Open the Network console to check how it's working</p>
+        </>
+    );
 };
 
 export default App;
