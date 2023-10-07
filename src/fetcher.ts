@@ -1,5 +1,47 @@
 import axios, {AxiosError} from 'axios';
 
+export const Observer = (function () {
+    let cbs = [] as ((arg: number) => void)[];
+
+    return {
+        register: function (cb: (arg: number) => void) {
+            cbs = [...cbs, cb];
+        },
+        unregister: function (cb: (arg: number) => void) {
+            cbs = cbs.filter((item) => item !== cb);
+        },
+        notifyAll: function (arg: number) {
+            for (const cb of cbs) cb(arg);
+        },
+    };
+})();
+
+const AxiosInstance = (function () {
+    let requestsInProgress = 0;
+
+    const axiosInstance = axios.create();
+    axiosInstance.interceptors.request.use((config) => {
+        requestsInProgress++;
+        Observer.notifyAll(requestsInProgress);
+        return config;
+    });
+
+    axiosInstance.interceptors.response.use(
+        (response) => {
+            requestsInProgress--;
+            Observer.notifyAll(requestsInProgress);
+            return response;
+        },
+        (error) => {
+            requestsInProgress--;
+            Observer.notifyAll(requestsInProgress);
+            return Promise.reject(error);
+        }
+    );
+
+    return {value: axiosInstance, register: Observer.register, unregister: Observer.unregister};
+})();
+
 interface Vessel {
     imo: number;
     name: string;
@@ -40,7 +82,7 @@ const parseSchedule = function (item: ScheduleReturned) {
 
 export const getSchedule = async function (imo: number) {
     try {
-        const res = await axios.get<PortCall[]>(
+        const res = await AxiosInstance.value.get<PortCall[]>(
             `https://import-coding-challenge-api.portchain.com/api/v2/schedule/${imo}`,
             {
                 transformResponse: [
@@ -59,7 +101,9 @@ export const getSchedule = async function (imo: number) {
 
 export const getVessels = async function () {
     try {
-        const res = await axios.get<Vessel[]>('https://import-coding-challenge-api.portchain.com/api/v2/vessels');
+        const res = await AxiosInstance.value.get<Vessel[]>(
+            'https://import-coding-challenge-api.portchain.com/api/v2/vessels'
+        );
         return res.data;
     } catch (error) {
         throw (error as AxiosError).message;
